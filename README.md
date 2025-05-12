@@ -1,12 +1,12 @@
-# IronSpec
+# FSVT
 
 Specification Testing framework prototype for [Dafny](https://github.com/dafny-lang/dafny) Specifications. 
 
-IronSpec brings together three different spec-testing techniques; Automatic Sanity Checking(ASC), automatic specification mutation testing, and a Methodology for writing Spec Testing Proofs (STPs). This repo contains the framework for the automated aspects of IronSpec, mutation testing and the ASC. 
+FSVT brings together three different spec-testing techniques; Automatic Sanity Checking(ASC), automatic specification mutation testing, and a Methodology for writing Spec Testing Proofs (STPs). This repo contains the framework for the automated aspects of FSVT, mutation testing and the ASC. 
 
 # Dependencies
 
-* [IronSpec-dafny-grpc-server](https://github.com/GLaDOS-Michigan/IronSpec-dafny-grpc-server)
+* [FSVT-dafny-grpc-server](https://github.com/Mulatijiang/FSVT-dafny-grpc-server)
 * openjdk-13-jdk 
 * gcc-8
 * g++-8
@@ -16,18 +16,18 @@ IronSpec brings together three different spec-testing techniques; Automatic Sani
 The prototype is built off of Dafny v3.8.1
 
 
-> **_NOTE:_** All dependencies will be installed when running `./setup/configureIronspec.sh` - detailed below
+> **_NOTE:_** All dependencies will be installed when running `./setup/configureFSVT.sh` - detailed below
 # Setup
 
-The recommended environment to run IronSpec is using [CloudLab](https://www.cloudlab.us/):
+The recommended environment to run FSVT is using [CloudLab](https://www.cloudlab.us/):
 
-IronSpec is designed to use one root node and `n` distributed nodes for verification performance. The root node is responsible for generating the specification mutations and verification conditions, the `n` separate nodes are used to parallelize checking verification conditions. The `n` additional nodes are not necessary to run IronSpec, they are used to help increase the performance and reduce experiment runtime. 
+FSVT is designed to use one root node and `n` distributed nodes for verification performance. The root node is responsible for generating the specification mutations and verification conditions, the `n` separate nodes are used to parallelize checking verification conditions. The `n` additional nodes are not necessary to run FSVT, they are used to help increase the performance and reduce experiment runtime. 
 
 In CloudLab, a default profile is available titled "IronSpecConfigNodes" and is configured to use 21, c8220 nodes - this can be modified in the experiment instantiation to change the configuration. A copy of this profile can be found in `./setup/cloudlabProfile.txt`
 
 After creating a CloudLab experiment, make note of all the unique numerical names of the nodes from the Node column in the experiment page List View. For example, the IDs of Nodes "clnode008" and "clnode059" are 008 and 059 respectively.
 
-> **_NOTE:_**  IronSpec should work on other CloudLab hardware, but if not using nodes from the Clemson cluster, some of the setup scripts will break. This can be fixed by replacing `.clemson.cloudlab.us` with the appropriate extension. 
+> **_NOTE:_**  FSVT should work on other CloudLab hardware, but if not using nodes from the Clemson cluster, some of the setup scripts will break. This can be fixed by replacing `.clemson.cloudlab.us` with the appropriate extension. 
 
 ## Getting Started
 
@@ -52,51 +52,160 @@ Total Alive Mutations = 1
 and the output in `./experimentOutput/sortASC/sortASC_output.txt` with a high serverity flag being raised `-- FLAG(HIGH) -- : NONE of Ensures depend on Any input parameters `
 
 
-##### Clone repo
-If using CloudLab, clone this repo in the `/proj/[cloudlabProjectName]/` repo. This is shared disk space in CloudLab and will speed up setup.
+### FSVT Local VMware Ubuntu Environment Setup  
 
-##### Setup SSH keys
-
-The first step is to set up the SSH keys between all of the CloudLab nodes. (This is necessary even when using a single node)
-
-**Make sure to follow these steps from a local machine (non-CloudLab).** 
-
-Run `./setup/configureSSHKeys.sh [username] [list_of_node_ids]`
-
-* `username`: CloudLab username
-* `list_of_node_ids`: A list of the CloudLab node IDs separated by spaces. 
-
-> **_NOTE:_**  IronSpec establishes the "root" node as the first node listed in the `[list_of_node_ids]` - this node will be the one to that the rest of the setup is run from, and will act as the "root" node for all future experiments  (i.e. one may choose the node with the smallest id)
-
-For example, if the list of nodes is included, run: `clnode008, clnode010 and clnode015` - `./setup/configureSSHKeys.sh [username] 008 010 015`
-
-> **_NOTE:_**  To avoid cloning twice, it is recomended to just copy `./setup/configureSSHKeys.sh` to your local machine.
-
-##### Setup CloudLab nodes
-
-Run `./setup/cloudlabConfigureIronSpec.sh [username] [list_of_node_ids]` **From the CloudLab node that will act as the "root" node for the experiment. (i.e the node with the smallest id)**
+#### **Goal**  
+Compile and run FSVT on a local computer without multi-node distributed setup.  
+**Advantages**: Local development and testing without CloudLab dependency.  
+**Disadvantages**: Cannot simulate real multi-node environments; potential environment inconsistencies with CloudLab.  
 
 
-(use `./setup/configureIronSpec.sh [username] [list_of_node_ids]` if the repo was not cloned this repo in `/proj/[cloudlabProjectName]/`)
+#### **Steps**  
+1. **Install Dependencies**  
+   Ensure local environment has: `git`, `make`, `g++`, `Bazel 4.0.0`, `.NET SDK`, `python3`, `pip`, etc.  
 
-This script will install all the dependencies on each node in the experiment, build IronSpec, and start the dafny-GRPC servers on all of the nodes at port `:50051`. This step may take some time to complete.
+2. **Clone Repositories**  
+   ```sh
+   git clone https://github.com/Mulatijiang/FSVT
+   git clone https://github.com/Mulatijiang/FSVT-dafny-grpc-server
+   ```  
 
-If there is ever a need to start or stop or see the PID of the dafny-GRPC servers run:
-`./setup/startDafnyServers.sh [username] [list_of_node_ids]`
-`./setup/stopDafnyServers.sh [username] [list_of_node_ids]`
-`./setup/checkDafnyPID.sh [username] [list_of_node_ids]`
+3. **Run Setup Scripts**  
+   ```sh
+   cd FSVT
+   ./setup/node_prep.sh
+   ./setup/install_dotnet_ubuntu_20.04.sh  # For Ubuntu 20.04
+   ```  
 
+4. **Modify Username in Configuration**  
+   Update `DafnyVerifier.cs` to use your actual username (e.g., `murat`):  
+   ```sh
+   sed -i "s/username/murat/" FSVT/Source/Dafny/DafnyVerifier.cs
+   ```  
+
+5. **Build FSVT and Z3**  
+   ```sh
+   make exe
+   make z3-ubuntu  # For Ubuntu
+   ```  
+
+6. **Build gRPC Server**  
+   ```sh
+   cd FSVT-dafny-grpc-server
+   bazel-4.0.0 build --cxxopt="-g" --cxxopt="--std=c++17" //src:server
+   ```  
+
+7. **Configure gRPC Server Address**  
+   Ensure `ipPorts.txt` contains:  
+   ```sh
+   echo "127.0.0.1:50051" > ipPorts.txt
+   ```  
+
+
+#### **Local Testing**  
+1. **Start gRPC Server** (run in a separate terminal foreground):  
+   ```sh
+   cd FSVT-dafny-grpc-server
+   ./bazel-bin/src/server -v -d ../FSVT/Binaries/Dafny
+   ```  
+
+2. **Test Simple Examples**  
+   Run the script for basic tests:  
+   ```sh
+   ./runSimpleExperiments.sh
+   ```  
+
+3. **Verify Output**  
+   Check results in the `experimentOutput` directory:  
+   ```sh
+   cat experimentOutput/MaxSpecCorrect/maxSpecCorrect_output.txt
+   cat experimentOutput/sortASC/sortASC_output.txt
+   ```  
+
+
+### CloudLab Remote Setup  
+
+#### **Steps on CloudLab Node `clnode153`**  
+1. **Configure SSH Keys Locally**  
+   ```sh
+   ./setup/configureSSHKeys.sh Mulati 153 155
+   ```  
+
+2. **Connect to CloudLab Node**  
+   ```sh
+   ssh Mulati@clnode153.clemson.cloudlab.us
+   ```  
+
+3. **Clone FSVT Repository**  
+   ```sh
+   git clone https://github.com/Mulatijiang/FSVT
+   cd FSVT
+   ```  
+
+4. **Run Environment Configuration**  
+   ```sh
+   ./setup/configureFSVT.sh Mulati 153 155
+   ```  
+
+5. **Start/Stop Dafny Servers**  
+   ```sh
+   ./setup/startDafnyServers.sh Mulati 153 155  # Start servers
+   ```
+   ```
+   ./setup/checkDafnyPID.sh Mulati 153 155       # Check server status
+   ```
+   ```
+   ./setup/stopDafnyServers.sh Mulati 153 155    # Stop servers
+   ```  
+
+6. **Run Simple Experiments**  
+   ```sh
+   ./runSimpleExperiments.sh
+   ```  
+
+7. **View Experiment Results**  
+   ```sh
+   cat experimentOutput/MaxSpecCorrect/maxSpecCorrect_output.txt
+   cat ./experimentOutput/sortASC/sortASC_output.txt
+   ```  
+
+
+### Additional Testing Steps  
+
+#### **Mutation Testing**  
+1. **Start gRPC Server** (as in local testing):  
+   ```sh
+   cd FSVT-dafny-grpc-server
+   ./bazel-bin/src/server -v -d ../FSVT/Binaries/Dafny
+   ```  
+
+2. **Run Mutation Test Command**  
+   ```sh
+   cd ~/Desktop/graduate/FSVT
+   mkdir -p experimentOutput/MaxSpecCorrect/outputLogs
+   ./Binaries/Dafny /compile:0 /timeLimit:1520 /trace /arith:5 /noCheating:1 /mutationTarget:maxExample.maxSpec /proofName:maxTest.maxT /proofLocation:"$(pwd)/specs/max/lemmaMaxTestCorrect.dfy" /serverIpPortList:ipPorts.txt $(pwd)/specs/max/maxSpec.dfy &> experimentOutput/MaxSpecCorrect/maxSpecCorrect_output.txt
+   ```  
+
+
+#### **ASC Testing**  
+1. **Run ASC Command (No gRPC Server Needed)**  
+   ```sh
+   cd ~/Desktop/graduate/FSVT
+   ./cleanExperimentOutput.sh
+   mkdir -p experimentOutput/sortASC
+   ./Binaries/Dafny /compile:0 /timeLimit:1520 /trace /arith:5 /noCheating:1 /mutationTarget:sort.SortSpec /proofName:sort.merge_sort /mutationRootName:sort.SortSpec /proofLocation:"$(pwd)/specs/sort/sortMethod.dfy" /serverIpPortList:ipPorts.txt /checkInputAndOutputSpecified $(pwd)/specs/sort/sortMethod.dfy &> experimentOutput/sortASC/sortASC_output.txt
+   ```  
 
 # Specs
 
-The IronSpec prototype is designed to facilitate testing Dafny specifications. Examples of specifications can be found in the `./specs`. 
+The FSVT prototype is designed to facilitate testing Dafny specifications. Examples of specifications can be found in the `./specs`. 
 
 This directory consists of 14 specifications, 6 in-house specifications, and 8 specifications from open-source systems.
 
 The 6 in-house specifications, max, sort, binary search, key-value state machine, token-wre, simpleAuction-wre, and two open source specs, div, and NthHarmonic are included in whole. div and NthHarmonic are transcribed to dafny from ["Exploring automatic specification repair in dafny programs"](https://conf.researchr.org/details/ase-2023/ase-2023--workshop--asyde/8/Exploring-Automatic-Specification-Repair-in-Dafny-Programs). Token-wre and simpleAuction-wre were taken from ["Deductive verification
 of smart contracts with dafny"](https://arxiv.org/abs/2208.02920) with small modifications to artificially introduce bugs into the corresponding specs. 
 
-In the following table is the list of all specs. For the open-source specs, the link corresponds to the initial commit that was used when testing the spec with IronSpec. 
+In the following table is the list of all specs. For the open-source specs, the link corresponds to the initial commit that was used when testing the spec with FSVT. 
 
 | Spec Name | Source | 
 | :---------------- | :------: |
@@ -115,7 +224,7 @@ In the following table is the list of all specs. For the open-source specs, the 
 | [Eth2.0](https://github.com/Consensys/eth2.0-dafny/tree/4e41de2866c8d017ccf4aaf2154471ffa722b308) | external |
 | [AWS ESDK](https://github.com/aws/aws-encryption-sdk-dafny/tree/eaa30b377be9c0c17aeae9fce11387b0fbccafba) | external |
 
-# Running IronSpec
+# Running FSVT
 
 To run all automatic experiments (Both Mutation Testing and Automatic Sanity Checking experiments) described in the OSDI paper, run: `./runAllExperiments.sh`
 
@@ -151,7 +260,7 @@ To run either the mutation testing experiments or just the ASC experiments, util
 
 The general command to run mutation testing follows this form:
 
-`./Binaries/Dafny [Standard Dafny Arguments] [IronSpec Arguemnts] [full-path-to-the-file-containing-mutation-target] &> output.txt`
+`./Binaries/Dafny [Standard Dafny Arguments] [FSVT Arguemnts] [full-path-to-the-file-containing-mutation-target] &> output.txt`
 
 For example to test the specification for a Max method (`/specs/max/maxSpec.dfy`), run the following command from the root node:
 ```
@@ -180,7 +289,7 @@ Full experiment logs can be found in `./outputLogs` which will contain the logs 
 
 The general command to run mutation testing follows this form:
 
-`./Binaries/Dafny` [Standard Dafny Arguments] [IronSpec Arguemnts] `/checkInputAndOutputSpecified` [full path to the file containing mutation target] `&> output.txt`
+`./Binaries/Dafny` [Standard Dafny Arguments] [FSVT Arguemnts] `/checkInputAndOutputSpecified` [full path to the file containing mutation target] `&> output.txt`
 
 ```
 ./Binaries/Dafny /compile:0 /timeLimit:1520 /trace /arith:5 /noCheating:1 /holeEval:testWrapper.SATSolver.test /proofName:testWrapper.SATSolver.start /mutationRootName:testWrapper.SATSolver.test /holeEvalRunOnce /holeEvalDepth:2 /proofLocation:"$(pwd)/specs/truesat/truesat_src/solver/solver.dfy" /holeEvalServerIpPortList:ipPortOneNode.txt /checkInputAndOutputSpecified $(pwd)/specs/truesat/truesat_src/solver/solver.dfy &> output.txt
@@ -192,14 +301,14 @@ A brief description and some examples are included in `./STPS`
 STPs are just Dafny proofs, so running STPS requires no additional instrumentation other than just running Dafny. 
 
 
-# IronSpec arguments
+# FSVT arguments
 
 | Argument | Description |
 | -------- | ------- |
 | /mutationTarget:[name] | Full Name of predicate for mutation target. In Dafny, this includes the module name followed by the predicate name. For example, if the predicate's name is `spec` located in module `Example`, the full name is: `Example.spec` |
 | /proofName:[name] | Name of lemma for full end-to-end proof. Also follows `Module.Name` format |
 | /proofLocation:[name] | Full path to `.dfy` file containing lemma targeted for /proofName |
-| /serverIpPortList:[name] | Name of `.txt` file containing the IP addresses and ports for other node end points. If configured using `./configureIronSpec.sh` a file named `ipPorts.txt` will be created with the correct formatting. An example is included: `ipPortsExample.txt` |
+| /serverIpPortList:[name] | Name of `.txt` file containing the IP addresses and ports for other node end points. If configured using `./configureFSVT.sh` a file named `ipPorts.txt` will be created with the correct formatting. An example is included: `ipPortsExample.txt` |
 |/inPlaceMutation | This flag indicates that the mutation target is for a method with pre/post conditions rather than a predicate. In this case /proofName is the name of the method to mutate the spec and the proof to check. | 
 | /mutationRootName:[name] | If the mutation target is different from the high-level safety property of the system, make sure to specify the high-level safety property with this flag. | 
 | /checkInputAndOutputSpecified | Argument to indicate the use of the ASC. When using this flag, /mutationTarget and /mutationRootName should be set to a predicate in the same file, the contents of the predicate are irrelevant, but these flags are still needed to run. /proofName should be set to the method that is being tested with the ASC | 

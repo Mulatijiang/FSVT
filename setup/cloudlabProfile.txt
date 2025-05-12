@@ -1,4 +1,4 @@
-"""Configurable number of nodes, generic default profile for using the IronSpec specification testing framework 
+"""Configurable number of nodes, generic default profile for using the FSVT specification testing framework 
 """
 import geni.portal as portal
 

@@ -27,8 +27,8 @@ cd -
 for ip in $ListOfIps; do
     # copying dafny binary to grpc servers
     echo "starting server at $ip " &
-    # ssh $Username@${ip} "(cd $ROOTPWD/IronSpec-dafny-grpc-server; ls)"
-    ssh $Username@${ip} "(cd $ROOTPWD/IronSpec-dafny-grpc-server; ./bazel-bin/src/server -v -d $ROOTPWD/dafny-holeEval/Binaries/Dafny & disown -a)" &> ${output_dir}/node_${ip}.txt &  
+    # ssh $Username@${ip} "(cd $ROOTPWD/FSVT-dafny-grpc-server; ls)"
+    ssh $Username@${ip} "(cd $ROOTPWD/FSVT-dafny-grpc-server; ./bazel-bin/src/server -v -d $ROOTPWD/dafny-holeEval/Binaries/Dafny & disown -a)" &> ${output_dir}/node_${ip}.txt &  
 done
 
 for((cnt=0;cnt<$numberOfNodes;cnt=cnt+1))

@@ -47,12 +47,12 @@ echo "---- Cloning  grpc server repo ----"
 
 cd ..
 # clone grpc server repo
-git clone https://github.com/GLaDOS-Michigan/IronSpec-dafny-grpc-server.git
+git clone https://github.com/Mulatijiang/FSVT-dafny-grpc-server.git
 cd -
 #add user-specific elements
-sed "s/username/$Username/" $ROOTPWD/IronSpec/Source/Dafny/DafnyVerifier.cs > ./tmp.cs && mv ./tmp.cs $ROOTPWD/IronSpec/Source/Dafny/DafnyVerifier.cs
+sed "s/username/$Username/" $ROOTPWD/FSVT/Source/Dafny/DafnyVerifier.cs > ./tmp.cs && mv ./tmp.cs $ROOTPWD/FSVT/Source/Dafny/DafnyVerifier.cs
 # make z3
-cd IronSpec/
+cd FSVT/
 make z3-ubuntu
 
 echo "---- Installing And Building Dependencies ----"
@@ -60,12 +60,12 @@ echo "---- Installing And Building Dependencies ----"
 for ip in $ListOfIps; do
     echo "-- installing dependencies for node $ip -- "
     # install global dependencies
-    ssh $Username@${ip} "(cd $ROOTPWD/IronSpec; ./setup/node_prep.sh)";
-    ssh $Username@${ip} "(cd $ROOTPWD/IronSpec; ./setup/install_dotnet_ubuntu_20.04.sh)";
+    ssh $Username@${ip} "(cd $ROOTPWD/FSVT; ./setup/node_prep.sh)";
+    ssh $Username@${ip} "(cd $ROOTPWD/FSVT; ./setup/install_dotnet_ubuntu_20.04.sh)";
     # #build IRONSPEC
-    ssh $Username@${ip} "(cd $ROOTPWD/IronSpec; make exe)"
+    ssh $Username@${ip} "(cd $ROOTPWD/FSVT; make exe)"
     # build dafny grpc server
-    ssh $Username@${ip} "(cd $ROOTPWD/IronSpec-dafny-grpc-server; bazel-4.0.0 build --cxxopt="-g" --cxxopt="--std=c++17" //src:server)";
+    ssh $Username@${ip} "(cd $ROOTPWD/FSVT-dafny-grpc-server; bazel-4.0.0 build --cxxopt="-g" --cxxopt="--std=c++17" //src:server)";
 done
 
 echo "---- Done Installing Dependencies ----"
@@ -75,7 +75,7 @@ echo "---- Starting Dafny GRPC Server(s) ----"
 
 for ip in $ListOfIps; do
     echo "grpc server started at $ip on port :50051 " &
-    ssh $Username@${ip} "(cd $ROOTPWD/IronSpec-dafny-grpc-server; ./bazel-bin/src/server -v -d $ROOTPWD/IronSpec/Binaries/Dafny & disown -a)" &> ${output_dir}/node_${ip}.txt &  
+    ssh $Username@${ip} "(cd $ROOTPWD/FSVT-dafny-grpc-server; ./bazel-bin/src/server -v -d $ROOTPWD/FSVT/Binaries/Dafny & disown -a)" &> ${output_dir}/node_${ip}.txt &  
 done
 
 for((cnt=0;cnt<$numberOfNodes;cnt=cnt+1))
@@ -86,4 +86,4 @@ done
 
 
 
-echo "IronSpec setup done!"
+echo "FSVT setup done!"

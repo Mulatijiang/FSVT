@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo -e "Running IronSpec MutationTesting Experiments \n"
+echo -e "Running FSVT MutationTesting Experiments \n"
 
 # # --------------
 

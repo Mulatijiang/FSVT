@@ -23,6 +23,6 @@ done
 for ip in $ListOfIps; do
     # copying dafny binary to grpc servers
     echo "stopping server at $ip " &
-    # ssh $Username@${ip} "(cd $ROOTPWD/IronSpec-dafny-grpc-server; ls)"
+    # ssh $Username@${ip} "(cd $ROOTPWD/FSVT-dafny-grpc-server; ls)"
     ssh $Username@${ip} "(echo "pid=$(pidof server Dafny)"; sudo killall server Dafny)"  
 done

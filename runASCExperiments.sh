@@ -1,5 +1,5 @@
 #!/bin/bash
-echo -e "Running IronSpec ASC Experiments \n"
+echo -e "Running FSVT ASC Experiments \n"
 
 # --------------
 # TrueSat
