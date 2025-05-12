@@ -46,26 +46,26 @@ echo "pwd is $ROOTPWD"
 cd -
 for ip in $ListOfIps; do
     echo "-- cloning repos and installing dependencies for node $ip -- "
-    #clone IRONSPEC repo
-    ssh $Username@${ip} "(cd $ROOTPWD; git clone https://github.com/GLaDOS-Michigan/IronSpec.git)"
+    #clone FSVT repo
+    ssh $Username@${ip} "(cd $ROOTPWD; git clone https://github.com/Mulatijiang/FSVT.git)"
     # # clone grpc server repo
-    ssh $Username@${ip} "(cd $ROOTPWD; git clone https://github.com/GLaDOS-Michigan/IronSpec-dafny-grpc-server.git)";
+    ssh $Username@${ip} "(cd $ROOTPWD; git clone https://github.com/Mulatijiang/FSVT-dafny-grpc-server.git)";
 
     # install global dependencies
-    ssh $Username@${ip} "(cd $ROOTPWD/IronSpec; ./setup/node_prep.sh)";
-    ssh $Username@${ip} "(cd $ROOTPWD/IronSpec; ./setup/install_dotnet_ubuntu_20.04.sh)";
+    ssh $Username@${ip} "(cd $ROOTPWD/FSVT; ./setup/node_prep.sh)";
+    ssh $Username@${ip} "(cd $ROOTPWD/FSVT; ./setup/install_dotnet_ubuntu_20.04.sh)";
 
     # #add user-specific elements
-    ssh $Username@${ip} "(sed "s/username/$Username/" $ROOTPWD/IronSpec/Source/Dafny/DafnyVerifier.cs > ./tmp.cs && mv ./tmp.cs $ROOTPWD/IronSpec/Source/Dafny/DafnyVerifier.cs)";
+    ssh $Username@${ip} "(sed "s/username/$Username/" $ROOTPWD/FSVT/Source/Dafny/DafnyVerifier.cs > ./tmp.cs && mv ./tmp.cs $ROOTPWD/FSVT/Source/Dafny/DafnyVerifier.cs)";
 
-    # #build IRONSPEC
-    ssh $Username@${ip} "(cd $ROOTPWD/IronSpec; make exe)"
+    # #build FSVT
+    ssh $Username@${ip} "(cd $ROOTPWD/FSVT; make exe)"
 
     # # make z3
-    ssh $Username@${ip} "(cd $ROOTPWD/IronSpec; make z3-ubuntu)" 
+    ssh $Username@${ip} "(cd $ROOTPWD/FSVT; make z3-ubuntu)" 
 
     # # build dafny grpc server
-    ssh $Username@${ip} "(cd $ROOTPWD/IronSpec-dafny-grpc-server; bazel-4.0.0 build --cxxopt="-g" --cxxopt="--std=c++17" //src:server)";
+    ssh $Username@${ip} "(cd $ROOTPWD/FSVT-dafny-grpc-server; bazel-4.0.0 build --cxxopt="-g" --cxxopt="--std=c++17" //src:server)";
 
 done
 
@@ -77,8 +77,8 @@ echo "---- Done Installing Dependencies ----"
 for ip in $ListOfIps; do
     # copying dafny binary to grpc servers
     echo "grpc server started at $ip on port :50051 " &
-    # ssh $Username@${ip} "(cd $ROOTPWD/IronSpec-dafny-grpc-server; ls)"
-    ssh $Username@${ip} "(cd $ROOTPWD/IronSpec-dafny-grpc-server; ./bazel-bin/src/server -v -d $ROOTPWD/IronSpec/Binaries/Dafny & disown -a)" &> ${output_dir}/node_${ip}.txt &  
+    # ssh $Username@${ip} "(cd $ROOTPWD/FSVT-dafny-grpc-server; ls)"
+    ssh $Username@${ip} "(cd $ROOTPWD/FSVT-dafny-grpc-server; ./bazel-bin/src/server -v -d $ROOTPWD/FSVT/Binaries/Dafny & disown -a)" &> ${output_dir}/node_${ip}.txt &  
 done
 
 for((cnt=0;cnt<$numberOfNodes;cnt=cnt+1))
@@ -89,4 +89,4 @@ done
 
 
 
-echo "IronSpec setup done!"
+echo "FSVT setup done!"
