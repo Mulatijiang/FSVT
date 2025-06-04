@@ -68,7 +68,7 @@ namespace Microsoft.Dafny {
       }
       
       // assuming each server has 40 cores. making double of that consumers
-      ConcurrentConsumerCount = serversList.Count * 2 * 40;
+      ConcurrentConsumerCount = Math.Min(serversList.Count * 4, Environment.ProcessorCount * 2);
       // setting up consumers
       for (int i = 0; i < ConcurrentConsumerCount; i++) {
         consumerTasks.Add(ProcessRequestAsync(tasksBuffer));
@@ -258,6 +258,7 @@ namespace Microsoft.Dafny {
       for (int i = 0; i < MaxDepth; i++) {
         // Console.WriteLine($"depth size = {tasksQueuePerDepth[i].Count}");
         foreach (var request in tasksQueuePerDepth[i]) {
+          if (tasksBuffer.Count > ConcurrentConsumerCount * 3) await Task.Delay(100);
           tasksBuffer.Post(request);
           startSize++;
         }
