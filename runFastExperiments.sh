@@ -6,6 +6,9 @@
 
 echo -e "正在运行FSVT变异测试实验 \n"
 
+# 启动grpc服务
+../FSVT-dafny-grpc-server/bazel-bin/src/server -v -d ./Binaries/Dafny &
+
 # --------------
 echo -e "开始对Max规范（正确版本）进行变异测试"
 
