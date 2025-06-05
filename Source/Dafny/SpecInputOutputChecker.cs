@@ -655,7 +655,7 @@ public static int[] AllIndexesOf(string str, string substr, bool ignoreCase = fa
         }
 
         if(!noInputIsNeededInOutput && desiredMethod.Ins.Count > 0){
-            Console.WriteLine("\n-- FLAG(HIGH) -- : NONE of Ensures depend on Any input parameters \n");
+            Console.WriteLine("\n-- 警告（高） -- : 所有后置条件均不依赖任何输入参数 \n");
             
             // === 新增：智能建议 ===
             if (desiredMethod.Name.ToLower().Contains("sort")) {
@@ -680,10 +680,6 @@ public static int[] AllIndexesOf(string str, string substr, bool ignoreCase = fa
           }
         }
         
-        if (hasUnconstrainedOutput) {
-          Console.WriteLine("\n-- FLAG(HIGH) -- : 存在完全未被约束的输出参数");
-          Console.WriteLine("   💡 建议: 为所有输出参数添加meaningful的约束条件");
-        }
         
         // === 新增：方法特定检测 ===
         if (desiredMethod.Name.ToLower().Contains("sort")) {
@@ -691,10 +687,10 @@ public static int[] AllIndexesOf(string str, string substr, bool ignoreCase = fa
           bool hasMultiset = desiredMethod.Ens.Any(e => Printer.ExprToString(e.E).ToLower().Contains("multiset"));
           
           if (hasOrder && !hasMultiset) {
-            Console.WriteLine("\n-- FLAG(HIGH) -- : 排序方法缺少元素保持约束");
+            Console.WriteLine("\n-- 标志（高） -- : 排序方法缺少元素保持约束");
             Console.WriteLine("   💡 建议: 添加 ensures multiset(input) == multiset(output)");
           } else if (!hasOrder && !hasMultiset) {
-            Console.WriteLine("\n-- FLAG(HIGH) -- : 排序方法缺少基本约束");
+            Console.WriteLine("\n-- 标志（高） -- : 排序方法缺少基本约束");
             Console.WriteLine("   💡 建议: 添加排序顺序约束和元素保持约束");
           }
         }
@@ -727,10 +723,10 @@ public static int[] AllIndexesOf(string str, string substr, bool ignoreCase = fa
           }
           onlyPartiallyMentioned = deepCheck;
           if(!notMentionedAtAll){
-            Console.WriteLine("\n-- FLAG(HIGH) -- : NONE of output ("+ outF.Name + ") are constrained by the post conditions");
+            Console.WriteLine("\n-- 警告（高） -- : 输出 (" + outF.Name + ") 的任何部分都未被后置条件约束");
           }
           else if(!onlyPartiallyMentioned){
-            Console.WriteLine("\n-- FLAG(Medium) -- : Only some parts of output ("+ outF.Name + ") are constrained by the post conditions");
+            Console.WriteLine("\n-- 警告（中） -- : 输出 (" + outF.Name + ") 只有部分内容被后置条件约束");
           }
           
 

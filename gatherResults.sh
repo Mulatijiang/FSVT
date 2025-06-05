@@ -18,15 +18,15 @@ echo -e "--- ASC实验输出 --- \n" >> $outputfile
 echo "-----------------------------------------------------------------------------------------------------------------------------------" >> $outputfile
 echo "|    规范名称     | 方法名称     | 标志                                                                                             | " >> $outputfile
 echo "-----------------------------------------------------------------------------------------------------------------------------------" >> $outputfile
-echo "|    TrueSat     | Formula CTor |  $(grep "FLAG" $(pwd)/experimentOutput/truesat/fmulaCtor/truesat_fmulaCtor_asc_output.txt) |" >> $outputfile
+echo "|    TrueSat     | Formula CTor |  $(grep "标志" $(pwd)/experimentOutput/truesat/fmulaCtor/truesat_fmulaCtor_asc_output.txt) |" >> $outputfile
 echo "-----------------------------------------------------------------------------------------------------------------------------------" >> $outputfile
-echo "|    TrueSat     |     Start    |  $(grep "FLAG" $(pwd)/experimentOutput/truesat/Start/truesat_start_asc_output.txt) |" >> $outputfile
+echo "|    TrueSat     |     Start    |  $(grep "标志" $(pwd)/experimentOutput/truesat/Start/truesat_start_asc_output.txt) |" >> $outputfile
 echo "-----------------------------------------------------------------------------------------------------------------------------------" >> $outputfile
-echo "|    Eth2.0      |   on_block   |  $(grep "FLAG" $(pwd)/experimentOutput/eth2/forkChoice/eth2_forkChoice_asc_output.txt) |" >> $outputfile
+echo "|    Eth2.0      |   on_block   |  $(grep "标志" $(pwd)/experimentOutput/eth2/forkChoice/eth2_forkChoice_asc_output.txt) |" >> $outputfile
 echo "-----------------------------------------------------------------------------------------------------------------------------------" >> $outputfile
-echo "|   AWS ESDK     |   Encrypt    |  $(grep "FLAG" $(pwd)/experimentOutput/awsESDK/encrypt/aws_esdk_encrypt_asc_output.txt) |" >> $outputfile
+echo "|   AWS ESDK     |   Encrypt    |  $(grep "标志" $(pwd)/experimentOutput/awsESDK/encrypt/aws_esdk_encrypt_asc_output.txt) |" >> $outputfile
 echo "-----------------------------------------------------------------------------------------------------------------------------------" >> $outputfile
-echo "|   AWS ESDK     |   Decrypt    |  $(grep "FLAG" $(pwd)/experimentOutput/awsESDK/decrypt/aws_esdk_decrypt_asc_output.txt) |" >> $outputfile
+echo "|   AWS ESDK     |   Decrypt    |  $(grep "标志" $(pwd)/experimentOutput/awsESDK/decrypt/aws_esdk_decrypt_asc_output.txt) |" >> $outputfile
 echo -e "-----------------------------------------------------------------------------------------------------------------------------------\n\n" >> $outputfile
 
 # --- 变异测试 ----
