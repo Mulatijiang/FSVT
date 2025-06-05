@@ -687,10 +687,10 @@ public static int[] AllIndexesOf(string str, string substr, bool ignoreCase = fa
           bool hasMultiset = desiredMethod.Ens.Any(e => Printer.ExprToString(e.E).ToLower().Contains("multiset"));
           
           if (hasOrder && !hasMultiset) {
-            Console.WriteLine("\n-- 标志（高） -- : 排序方法缺少元素保持约束");
+            Console.WriteLine("\n-- 警告（高） -- : 排序方法缺少元素保持约束");
             Console.WriteLine("   💡 建议: 添加 ensures multiset(input) == multiset(output)");
           } else if (!hasOrder && !hasMultiset) {
-            Console.WriteLine("\n-- 标志（高） -- : 排序方法缺少基本约束");
+            Console.WriteLine("\n-- 警告（高） -- : 排序方法缺少基本约束");
             Console.WriteLine("   💡 建议: 添加排序顺序约束和元素保持约束");
           }
         }
