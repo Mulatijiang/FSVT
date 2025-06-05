@@ -1,8 +1,8 @@
 #!/bin/bash
-echo "Configuring other scripts... "
-echo "Personalizing scripts with [username] [list_of_node_ids]"
+echo "正在配置其他脚本... "
+echo "使用 [用户名] [节点ID列表] 个性化脚本"
 
-#Config-Variables
+# 配置变量
 output_dir=grpc_nodes_output;
 output_logs=outputLogs;
 mkdir -p ${output_dir}
@@ -17,15 +17,15 @@ do
     ListOfNodeIds+="${!i} "
     numberOfNodes+=1
 done
-echo ListOfNodeIds = $ListOfNodeIds
-echo Username = $Username
+echo 节点ID列表 = $ListOfNodeIds
+echo 用户名 = $Username
 
-#Calculate IP addresses of nodes and create ipPorts.txt
+# 计算节点的IP地址并创建ipPorts.txt
 rm -f ipPorts.txt
 touch ipPorts.txt
 # > ipPorts.txt
 for id in $ListOfNodeIds; do
-    echo "Getting IP for Node ID = $id"
+    echo "正在获取节点ID = $id 的IP地址"
     nodeId="$(ssh $Username@clnode${id}.clemson.cloudlab.us ifconfig | grep "130.127" | awk '{print $2}')"
     echo "$nodeId:50051" >> ipPorts.txt
     ListOfIps+="$nodeId"
@@ -34,49 +34,49 @@ done
 
 
 for ip in $ListOfIps; do
-    echo "Testing ssh connection to ID = $ip"
+    echo "测试到ID = $ip 的ssh连接"
     ssh $Username@${ip} ls;
 done
 
-echo "---- Installing And Building Dependencies ----"
+echo "---- 安装和构建依赖 ----"
 
 cd ..
 ROOTPWD=$(pwd)
-echo "pwd is $ROOTPWD"
+echo "当前目录是 $ROOTPWD"
 cd -
 for ip in $ListOfIps; do
-    echo "-- cloning repos and installing dependencies for node $ip -- "
-    #clone FSVT repo
+    echo "-- 为节点 $ip 克隆仓库并安装依赖 -- "
+    # 克隆FSVT仓库
     ssh $Username@${ip} "(cd $ROOTPWD; git clone https://github.com/Mulatijiang/FSVT.git)"
-    # # clone grpc server repo
+    # 克隆grpc服务器仓库
     ssh $Username@${ip} "(cd $ROOTPWD; git clone https://github.com/Mulatijiang/FSVT-dafny-grpc-server.git)";
 
-    # install global dependencies
+    # 安装全局依赖
     ssh $Username@${ip} "(cd $ROOTPWD/FSVT; ./setup/node_prep.sh)";
     ssh $Username@${ip} "(cd $ROOTPWD/FSVT; ./setup/install_dotnet_ubuntu_20.04.sh)";
 
-    # #add user-specific elements
+    # 添加用户特定元素
     ssh $Username@${ip} "(sed "s/username/$Username/" $ROOTPWD/FSVT/Source/Dafny/DafnyVerifier.cs > ./tmp.cs && mv ./tmp.cs $ROOTPWD/FSVT/Source/Dafny/DafnyVerifier.cs)";
 
-    # #build FSVT
+    # 构建FSVT
     ssh $Username@${ip} "(cd $ROOTPWD/FSVT; make exe)"
 
-    # # make z3
+    # 编译z3
     ssh $Username@${ip} "(cd $ROOTPWD/FSVT; make z3-ubuntu)" 
 
-    # # build dafny grpc server
+    # 构建dafny grpc服务器
     ssh $Username@${ip} "(cd $ROOTPWD/FSVT-dafny-grpc-server; bazel-4.0.0 build --cxxopt="-g" --cxxopt="--std=c++17" //src:server)";
 
 done
 
-echo "---- Done Installing Dependencies ----"
+echo "---- 依赖安装完成 ----"
 
 
-# echo "---- Starting Dafny GRPC Server(s) ----"
+# echo "---- 启动Dafny GRPC服务器(s) ----"
 
 for ip in $ListOfIps; do
-    # copying dafny binary to grpc servers
-    echo "grpc server started at $ip on port :50051 " &
+    # 将dafny二进制文件复制到grpc服务器
+    echo "grpc服务器在 $ip 端口:50051 启动" &
     # ssh $Username@${ip} "(cd $ROOTPWD/FSVT-dafny-grpc-server; ls)"
     ssh $Username@${ip} "(cd $ROOTPWD/FSVT-dafny-grpc-server; ./bazel-bin/src/server -v -d $ROOTPWD/FSVT/Binaries/Dafny & disown -a)" &> ${output_dir}/node_${ip}.txt &  
 done
@@ -84,9 +84,7 @@ done
 for((cnt=0;cnt<$numberOfNodes;cnt=cnt+1))
 do
     wait -n
-    echo "One process with pid=$! end with Exit status: $?"
+    echo "一个进程(进程ID=$!)结束，退出状态: $?"
 done
 
-
-
-echo "FSVT setup done!"
+echo "FSVT设置完成!"

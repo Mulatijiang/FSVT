@@ -1714,22 +1714,85 @@ public static int[] AllIndexesOf(string str, string substr, bool ignoreCase = fa
         }
       }
       }
+            
       Console.WriteLine($"expressionFinder.availableExpressions.Count == {expressionFinder.availableExpressions.Count}");
+
+      // 第一步：去除完全重复的mutations
       Hashtable duplicateMutations = new Hashtable();
       foreach (var ed in expressionFinder.availableExpressions)
       {
         if(!duplicateMutations.ContainsKey(Printer.ExprToString(ed.expr)))
         {
-          // availableExpressionsTemp.Add(ed);
           duplicateMutations.Add(Printer.ExprToString(ed.expr),ed);
         }else{
-          Console.WriteLine("Skipping = " + Printer.ExprToString(ed.expr));
+          Console.WriteLine("Skipping duplicate = " + Printer.ExprToString(ed.expr));
         }
       }
+      var dedupExpressions = duplicateMutations.Values.Cast<Microsoft.Dafny.ExpressionFinder.ExpressionDepth>().ToList();
+
+      // 第二步：质量筛选和优先级排序
+      var prioritizedMutations = new List<ExpressionFinder.ExpressionDepth>();
+      var simpleCount = 0;
+      var complexCount = 0;
+      var skippedSimple = 0;
+
+      foreach (var ed in dedupExpressions) {
+          string exprStr = Printer.ExprToString(ed.expr);
+          
+          // 跳过无意义的简单常量
+          if (exprStr.Trim() == "true" || exprStr.Trim() == "false" || 
+              exprStr.Trim() == "0" || exprStr.Trim() == "1") {
+              Console.WriteLine("Skipping trivial = " + exprStr);
+              continue;
+          }
+          
+          // 优先保留复杂表达式
+          if (exprStr.Contains("forall") || exprStr.Contains("exists") || 
+              exprStr.Contains("&&") || exprStr.Contains("||") || 
+              exprStr.Contains("==>") || exprStr.Length > 50) {
+              prioritizedMutations.Add(ed);
+              complexCount++;
+          } 
+          // 限制简单表达式数量
+          else if (simpleCount < 15) {
+              prioritizedMutations.Add(ed);
+              simpleCount++;
+          } else {
+              skippedSimple++;
+          }
+      }
+
+      expressionFinder.availableExpressions = prioritizedMutations;
+      Console.WriteLine($"Optimization results: {duplicateMutations.Count} after dedup -> {complexCount} complex + {simpleCount} simple = {prioritizedMutations.Count} total (skipped {skippedSimple} simple)");
+
       expressionFinder.availableExpressions = duplicateMutations.Values.Cast<Microsoft.Dafny.ExpressionFinder.ExpressionDepth>().ToList();
       int numFailiedAfter1stPass = 0;
       int remainingVal = expressionFinder.availableExpressions.Count;
       int mutationCap = expressionFinder.availableExpressions.Count < 50 ? expressionFinder.availableExpressions.Count : expressionFinder.availableExpressions.Count; 
+
+      // === 核心优化：预筛选去重 ===
+      var originalCount = expressionFinder.availableExpressions.Count;
+      var filteredExpressions = new List<ExpressionFinder.ExpressionDepth>();
+      var exprSignatures = new HashSet<string>();
+
+      for (int i = 0; i < expressionFinder.availableExpressions.Count; i++) {
+          var expr = expressionFinder.availableExpressions[i];
+          string signature = Printer.ExprToString(expr.expr).Replace(" ", "").ToLower();
+          
+          // 跳过重复表达式
+          if (exprSignatures.Contains(signature)) continue;
+          
+          // 跳过简单常量mutations
+          if (signature == "true" || signature == "false" || signature == "0" || signature == "1") continue;
+          
+          exprSignatures.Add(signature);
+          filteredExpressions.Add(expr);
+      }
+
+      expressionFinder.availableExpressions = filteredExpressions;
+      mutationCap = Math.Min(filteredExpressions.Count, 30); // 限制最大数量
+      Console.WriteLine($"Optimized: {originalCount} -> {mutationCap} mutations");
+
 
       Console.WriteLine("--- Begin Is At Least As Weak Pass -- " + remainingVal);
       for (int i = 0; i < mutationCap; i++) {
@@ -3365,35 +3428,50 @@ public void PrintExprAndCreateProcessLemmaSeperateProof(Program program, Program
       }
     }
 
-     public Boolean isDafnyVerifySuccessful(int i)
-  {
-    var request = dafnyVerifier.requestsList[i].Last();
-      var position = dafnyVerifier.requestToPostConditionPosition[request];
-      var lemmaStartPosition = dafnyVerifier.requestToLemmaStartPosition[request];
-      var output = dafnyVerifier.dafnyOutput[request];
-      var response = output.Response;
-      var filePath = output.FileName;
-      // var startTime = output.StartTime;
-      var execTime = output.ExecutionTimeInMs;
+    private Dictionary<string, bool> verificationCache = new Dictionary<string, bool>(); // 添加到类字段
+
+    public Boolean isDafnyVerifySuccessful(int i)
+    {
+        // 缓存检查
+        var expr = expressionFinder.availableExpressions[i];
+        string cacheKey = $"{i}_{Printer.ExprToString(expr.expr).GetHashCode()}";
+        
+        if (verificationCache.ContainsKey(cacheKey)) {
+            return verificationCache[cacheKey];
+        }
+
+        var request = dafnyVerifier.requestsList[i].Last();
+        var position = dafnyVerifier.requestToPostConditionPosition[request];
+        var lemmaStartPosition = dafnyVerifier.requestToLemmaStartPosition[request];
+        var output = dafnyVerifier.dafnyOutput[request];
+        var response = output.Response;
+        var filePath = output.FileName;
+        var execTime = output.ExecutionTimeInMs;
         executionTimes.Add(execTime);
-      // startTimes.Add(startTime);
-      var expectedOutput =
-        $"{filePath}({position},0): Error: A postcondition might not hold on this return path.";
-      var expectedInconclusiveOutputStart =
-        $"{filePath}({lemmaStartPosition},{validityLemmaNameStartCol}): Verification inconclusive";
-      var res = DafnyVerifierClient.IsCorrectOutput(response, expectedOutput, expectedInconclusiveOutputStart);
-      return response.EndsWith("0 errors\n");
-  }
+        
+        var expectedOutput = $"{filePath}({position},0): Error: A postcondition might not hold on this return path.";
+        var expectedInconclusiveOutputStart = $"{filePath}({lemmaStartPosition},{validityLemmaNameStartCol}): Verification inconclusive";
+        var res = DafnyVerifierClient.IsCorrectOutput(response, expectedOutput, expectedInconclusiveOutputStart);
+        
+        bool result = response.EndsWith("0 errors\n");
+        verificationCache[cacheKey] = result; // 缓存结果
+        return result;
+    }
 
-
-    public static Result IsCorrectOutput(string output, string expectedOutput, string expectedInconclusiveOutputStart) {
-      if (output.EndsWith("1 error\n")) {
+    public static Result IsCorrectOutput(string output, string expectedOutput, string expectedInconclusiveOutputStart)
+    {
+      if (output.EndsWith("1 error\n"))
+      {
         var outputList = output.Split('\n');
         return ((outputList.Length >= 7) && (outputList[outputList.Length - 7] == expectedOutput)) ? Result.CorrectProof : Result.IncorrectProof;
-      } else if (output.EndsWith("1 inconclusive\n")) {
+      }
+      else if (output.EndsWith("1 inconclusive\n"))
+      {
         var outputList = output.Split('\n');
         return ((outputList.Length >= 4) && outputList[outputList.Length - 4].StartsWith(expectedInconclusiveOutputStart)) ? Result.CorrectProofByTimeout : Result.IncorrectProof;
-      } else {
+      }
+      else
+      {
         return Result.IncorrectProof;
       }
     }
